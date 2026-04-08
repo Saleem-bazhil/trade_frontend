@@ -4,7 +4,7 @@ import {
   AlertCircle, X, Plus, Layers, Sparkles, ArrowRight
 } from 'lucide-react';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8001';
+const API_BASE = (import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
 
 const Spinner = () => (
   <svg className="spin" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -68,8 +68,8 @@ function App() {
     }
 
     const endpoint = isSingle
-      ? `${API_BASE}/api/process-report`
-      : `${API_BASE}/api/process-multiple`;
+      ? `${API_BASE}/process-report`
+      : `${API_BASE}/process-multiple`;
 
     try {
       const response = await fetch(endpoint, { method: 'POST', body: formData });
