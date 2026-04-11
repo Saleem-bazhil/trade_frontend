@@ -4,7 +4,7 @@ import {
   AlertCircle, X, Plus, Layers, Sparkles, ArrowRight
 } from 'lucide-react';
 
-const API_BASE = 'https://trade.systimus.in';
+const API_BASE = 'https://demo.bazhilgroups.in/api';
 
 const Spinner = () => (
   <svg className="spin" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
