@@ -74,8 +74,12 @@ function App() {
     try {
       const response = await fetch(endpoint, { method: 'POST', body: formData });
       if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.detail || 'Failed to process the report');
+        let message = `Server error (${response.status})`;
+        try {
+          const err = await response.json();
+          message = err.detail || message;
+        } catch {}
+        throw new Error(message);
       }
 
       const recordsProcessed = response.headers.get('X-Records-Processed');

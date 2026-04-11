@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://demo.bazhilgroups.in',
+        target: 'http://localhost:8001',
         changeOrigin: true,
       },
     },
