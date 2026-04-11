@@ -9,7 +9,6 @@ export default defineConfig({
       '/api': {
         target: 'https://demo.bazhilgroups.in',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
       },
     },
   },
