@@ -93,10 +93,14 @@ function App() {
       const recordsProcessed = response.headers.get('X-Records-Processed');
       const recordsFiltered = response.headers.get('X-Records-Filtered');
       const fileStatsRaw = response.headers.get('X-File-Stats');
+      const cityStatsRaw = response.headers.get('X-City-Stats');
       const contentDisposition = response.headers.get('Content-Disposition');
 
       let fileStats = null;
       try { fileStats = fileStatsRaw ? JSON.parse(fileStatsRaw) : null; } catch {}
+
+      let cityStats = null;
+      try { cityStats = cityStatsRaw ? JSON.parse(cityStatsRaw) : null; } catch {}
 
       let filename = `Trade_Report_${new Date().toLocaleDateString('en-GB').replace(/\//g, '-')}.xlsx`;
       if (contentDisposition?.includes('filename='))
@@ -109,6 +113,7 @@ function App() {
         recordsProcessed: recordsProcessed || '0',
         recordsFiltered: recordsFiltered || '0',
         fileStats,
+        cityStats,
       });
     } catch (err) {
       setError(err.message);
@@ -330,6 +335,23 @@ function App() {
                   </div>
                 </div>
               </div>
+
+              {/* City Stats */}
+              {result.cityStats && Object.keys(result.cityStats).length > 0 && (
+                <div style={{ marginBottom: 24, padding: '16px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px' }}>
+                  <h4 style={{ margin: '0 0 12px', fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>Region Breakdown</h4>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {Object.entries(result.cityStats)
+                      .sort((a, b) => b[1] - a[1])
+                      .map(([city, count]) => (
+                      <div key={city} style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 20, padding: '4px 12px', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{city}</span>
+                        <span style={{ color: 'var(--accent)', fontWeight: 700, background: 'var(--accent-light)', padding: '2px 6px', borderRadius: 10 }}>{count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Download */}
               <a href={result.downloadUrl} download={result.filename} className="btn-download">
