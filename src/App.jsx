@@ -1,25 +1,25 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
-  UploadCloud, FileSpreadsheet, Download, CheckCircle,
-  AlertCircle, X, Plus, Layers, ArrowRight, Sun, Moon
+  UploadCloud, FileSpreadsheet, Download,
+  Sun, Moon, Search, Plus
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 const API_BASE = '/api';
 
 const Spinner = () => (
-  <svg className="spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+  <svg className="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
     <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" opacity="0.3" />
     <path d="M12 2v4" />
   </svg>
 );
 
 function App() {
-  const [files, setFiles] = useState([]);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState(null);
   const [result, setResult] = useState(null);
-  const [dragActive, setDragActive] = useState(false);
-  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
+  const [search, setSearch] = useState('');
 
   const fileInputRef = useRef(null);
 
@@ -30,49 +30,26 @@ function App() {
 
   const toggleTheme = () => setTheme(t => t === 'light' ? 'dark' : 'light');
 
-  /* ─── Drag & drop handlers ─── */
-  const handleDragOver = (e) => { e.preventDefault(); setDragActive(true); };
-  const handleDragLeave = () => setDragActive(false);
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setDragActive(false);
-    if (e.dataTransfer.files?.length > 0) addFiles(Array.from(e.dataTransfer.files));
-  };
-
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     if (e.target.files?.length > 0) {
-      addFiles(Array.from(e.target.files));
+      await processFiles(Array.from(e.target.files));
       e.target.value = '';
     }
   };
 
-  const addFiles = (newFiles) => {
-    setError(null);
-    setResult(null);
-    const valid = [];
-    for (const f of newFiles) {
-      if (!f.name.endsWith('.xlsx')) { setError(`"${f.name}" is not a valid .xlsx file.`); continue; }
-      if (!files.some(ex => ex.name === f.name)) valid.push(f);
-    }
-    setFiles(prev => [...prev, ...valid]);
-  };
-
-  const removeFile = (idx) => { setFiles(prev => prev.filter((_, i) => i !== idx)); setResult(null); };
-  const triggerFileInput = () => fileInputRef.current?.click();
-
-  /* ─── Process ─── */
-  const processFiles = async () => {
-    if (files.length === 0) return;
+  const processFiles = async (selectedFiles) => {
+    if (selectedFiles.length === 0) return;
     setProcessing(true);
     setError(null);
+    setResult(null);
 
     const formData = new FormData();
-    const isSingle = files.length === 1;
+    const isSingle = selectedFiles.length === 1;
 
     if (isSingle) {
-      formData.append('file', files[0]);
+      formData.append('file', selectedFiles[0]);
     } else {
-      for (const f of files) formData.append('files', f);
+      for (const f of selectedFiles) formData.append('files', f);
     }
 
     const endpoint = isSingle
@@ -107,6 +84,15 @@ function App() {
         filename = contentDisposition.split('filename=')[1].replace(/"/g, '');
 
       const blob = await response.blob();
+      const arrayBuffer = await blob.arrayBuffer();
+      const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+      const tradeReportSheet = workbook.Sheets['Trade Report'];
+      
+      let gridData = [];
+      if (tradeReportSheet) {
+        gridData = XLSX.utils.sheet_to_json(tradeReportSheet, { defval: "" });
+      }
+
       setResult({
         downloadUrl: window.URL.createObjectURL(blob),
         filename,
@@ -114,6 +100,7 @@ function App() {
         recordsFiltered: recordsFiltered || '0',
         fileStats,
         cityStats,
+        gridData
       });
     } catch (err) {
       setError(err.message);
@@ -122,248 +109,229 @@ function App() {
     }
   };
 
-  /* ─── Render ─── */
+  // Filter logic
+  const filteredData = useMemo(() => {
+    if (!result?.gridData) return [];
+    if (!search.trim()) return result.gridData;
+    const q = search.toLowerCase();
+    return result.gridData.filter(row => {
+      const tNo = String(row['Ticket No'] || '').toLowerCase();
+      const cId = String(row['Case Id'] || '').toLowerCase();
+      const st = String(row['Status'] || '').toLowerCase();
+      const loc = String(row['ASP City'] || '').toLowerCase();
+      const prod = String(row['Product Name'] || '').toLowerCase();
+      return tNo.includes(q) || cId.includes(q) || st.includes(q) || loc.includes(q) || prod.includes(q);
+    });
+  }, [result?.gridData, search]);
+
+  const getStatusClass = (statusStr) => {
+    const s = String(statusStr || '').toUpperCase();
+    if (s.includes('NEW')) return 'status-new';
+    if (s.includes('PENDING') || s.includes('WIP')) return 'status-pending';
+    if (s.includes('CLOSED') || s.includes('RESOLVED')) return 'status-closed';
+    return 'status-default';
+  };
+
+  const getWipBadgeClass = (wipStr) => {
+    const w = parseInt(wipStr, 10);
+    if (isNaN(w)) return 'wip-badge default';
+    if (w > 10) return 'wip-badge danger';
+    if (w > 5)  return 'wip-badge warning';
+    return 'wip-badge default';
+  };
+
   return (
-    <>
-      {/* Theme toggle */}
-      <button className="theme-toggle" onClick={toggleTheme} title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}>
-        {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
-      </button>
-
-      <div className="split-layout">
-
-        {/* ─── LEFT: Upload Panel ─── */}
-        <div className="split-left">
-          <div className="split-left-inner">
-            <header className="fade-up" style={{ marginBottom: 28 }}>
-              <h1 style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)', fontWeight: 800, lineHeight: 1.2, margin: '0 0 8px', color: 'var(--text-primary)' }}>
-                Trade Report Generator
-              </h1>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.5, margin: 0 }}>
-                Upload Flex WIP Reports to generate a filtered Trade Report with Pivot Table.
-              </p>
-            </header>
-
-            <div className="card fade-up" style={{ animationDelay: '0.1s' }}>
-              <div style={{ padding: 24 }}>
-
-                {/* Upload Zone */}
-                <div
-                  className={`drop-zone ${files.length > 0 || dragActive ? 'has-files' : ''}`}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                  onClick={triggerFileInput}
-                  style={{ padding: '36px 20px', textAlign: 'center' }}
-                >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    onChange={handleFileChange}
-                    accept=".xlsx"
-                    multiple
-                    style={{ display: 'none' }}
-                  />
-
-                  {files.length > 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-                      <Layers size={36} style={{ color: 'var(--accent)', marginBottom: 4 }} />
-                      <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>
-                        {files.length} file{files.length > 1 ? 's' : ''} selected
-                      </span>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <Plus size={12} /> Click or drop to add more
-                      </span>
-                    </div>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-                      <UploadCloud size={36} style={{ color: 'var(--accent)', marginBottom: 4 }} />
-                      <span style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--text-primary)' }}>
-                        Drag & drop your files here
-                      </span>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                        or click to browse &middot; .xlsx only &middot; multiple files
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* File List */}
-                {files.length > 0 && (
-                  <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    {files.map((f, i) => (
-                      <div key={i} className="file-chip" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-                          <FileSpreadsheet size={17} style={{ color: 'var(--accent)', flexShrink: 0 }} />
-                          <div style={{ minWidth: 0 }}>
-                            <p style={{ margin: 0, fontSize: '0.84rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--text-primary)' }}>
-                              {f.name}
-                            </p>
-                            <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                              {(f.size / 1024).toFixed(1)} KB
-                            </p>
-                          </div>
-                        </div>
-                        <button className="file-chip-remove" onClick={(e) => { e.stopPropagation(); removeFile(i); }}>
-                          <X size={15} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Error */}
-                {error && (
-                  <div className="error-banner fade-up" style={{ marginTop: 14, display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                    <AlertCircle size={16} style={{ flexShrink: 0, marginTop: 1 }} />
-                    <span style={{ fontSize: '0.84rem', fontWeight: 500 }}>{error}</span>
-                  </div>
-                )}
-
-                {/* Action Button */}
-                <div style={{ marginTop: 20 }}>
-                  <button
-                    className="btn-primary"
-                    onClick={processFiles}
-                    disabled={files.length === 0 || processing}
-                    style={{ width: '100%' }}
-                  >
-                    {processing ? (
-                      <>
-                        <Spinner />
-                        <span style={{ marginLeft: 10 }}>Processing…</span>
-                      </>
-                    ) : (
-                      <>
-                        {files.length > 1
-                          ? `Generate & Combine (${files.length} files)`
-                          : 'Generate Trade Report'}
-                        <ArrowRight size={17} style={{ marginLeft: 8 }} />
-                      </>
-                    )}
-                  </button>
-                </div>
-
-              </div>
-            </div>
-
-            <p style={{ marginTop: 20, fontSize: '0.72rem', color: 'var(--text-muted)', textAlign: 'center' }}>
-              Flex WIP → Trade Report + Pivot Table
-            </p>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', background: 'var(--bg-app)' }}>
+      {/* ─── TOP HEADER TOOLBAR ─── */}
+      <header style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'space-between', 
+        padding: '16px 24px', 
+        background: 'var(--surface-header)',
+        borderBottom: '1px solid var(--border-subtle)',
+        zIndex: 10
+      }}>
+        {/* Left branding */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'var(--text-primary)' }}>
+             <FileSpreadsheet size={22} style={{ color: 'var(--brand-accent)' }}/>
+             <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, letterSpacing: '0.02em' }}>Trade Report Explorer</h1>
           </div>
+          
+          <button 
+            onClick={() => fileInputRef.current?.click()} 
+            disabled={processing}
+            className="btn-upload"
+          >
+            {processing ? <Spinner /> : <UploadCloud size={16} />}
+            <span style={{ marginLeft: 8, fontWeight: 600 }}>{processing ? 'Processing...' : 'Upload Flex Excel'}</span>
+          </button>
+          
+          <input
+            ref={fileInputRef}
+            type="file"
+            onChange={handleFileChange}
+            accept=".xlsx"
+            multiple
+            style={{ display: 'none' }}
+          />
+
+          {error && <span style={{ color: 'var(--error-text)', fontSize: '0.85rem', fontWeight: 500 }}>{error}</span>}
         </div>
 
-        {/* ─── RIGHT: Output Panel ─── */}
-        <div className="split-right">
-          {!result && !processing && (
-            <div className="empty-state fade-up">
-              <FileSpreadsheet size={64} style={{ color: 'var(--border)', marginBottom: 16 }} />
-              <h3 style={{ margin: '0 0 6px', fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-muted)' }}>
-                No report yet
-              </h3>
-              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', maxWidth: 260 }}>
-                Upload files and generate to see results here.
-              </p>
-            </div>
+        {/* Right tools */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          {result && (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginRight: 8 }}>
+                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                     <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>Total Scanned</span>
+                     <span style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 800 }}>{Number(result.recordsProcessed).toLocaleString()}</span>
+                 </div>
+                 <div style={{ height: 24, width: 1, background: 'var(--border-subtle)' }}></div>
+                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                     <span style={{ fontSize: '0.65rem', color: 'var(--brand-accent)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>Trade Extracted</span>
+                     <span style={{ fontSize: '0.95rem', color: 'var(--brand-accent)', fontWeight: 800 }}>{Number(result.recordsFiltered).toLocaleString()}</span>
+                 </div>
+              </div>
+              <a href={result.downloadUrl} download={result.filename} className="btn-export">
+                <Download size={15} style={{ marginRight: 8 }}/>
+                <span>Export Report</span>
+              </a>
+            </>
           )}
+          
+          <button className="theme-toggle-icon" onClick={toggleTheme} title="Toggle Theme">
+            {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+          </button>
+        </div>
+      </header>
 
-          {processing && (
-            <div className="empty-state fade-up">
-              <div style={{ marginBottom: 16 }}>
-                <svg className="spin" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round">
+      {/* ─── MAIN CONTENT ─── */}
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '24px 32px', overflow: 'hidden', position: 'relative' }}>
+        
+        {processing && (
+          <div style={{ position: 'absolute', inset: 0, background: 'var(--bg-app)', opacity: 0.85, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+                <svg className="spin" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--brand-accent)" strokeWidth="3" strokeLinecap="round">
                   <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" opacity="0.2" />
                   <path d="M12 2v4" />
                 </svg>
+                <span style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--text-primary)', letterSpacing: '0.02em' }}>Crunching Excel Data...</span>
+             </div>
+          </div>
+        )}
+
+        {!result && !processing && (
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+             <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+                <FileSpreadsheet size={64} style={{ opacity: 0.15, margin: '0 auto 20px' }} />
+                <h3 style={{ fontSize: '1.3rem', margin: '0 0 10px', color: 'var(--text-secondary)', fontWeight: 600 }}>No Data Available</h3>
+                <p style={{ margin: 0, fontSize: '0.95rem' }}>Use the 'Upload Flex Excel' button above to generate the trade lists.</p>
+             </div>
+          </div>
+        )}
+
+        {result && (
+          <>
+            {/* Table Header Area */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <div className="search-bar">
+                <Search size={16} strokeWidth={2.5} className="search-icon" />
+                <input 
+                  type="text" 
+                  placeholder="Search by Ticket, Case Id, Status, Area..." 
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                />
               </div>
-              <h3 style={{ margin: '0 0 6px', fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
-                Processing…
-              </h3>
-              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                This may take a moment for large files.
-              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <button className="btn-add">
+                  <Plus size={16} /> Add WO
+                </button>
+                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '0.05em' }}>
+                  {filteredData.length} OF {result.gridData.length} ROWS SHOWING
+                </div>
+              </div>
             </div>
-          )}
 
-          {result && !processing && (
-            <div className="fade-up" style={{ width: '100%', maxWidth: 500 }}>
-              {/* Success header */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-                <div className="success-badge">
-                  <CheckCircle size={22} color="#fff" />
-                </div>
-                <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                  {result.fileStats ? 'Reports Combined!' : 'Report Ready!'}
-                </h3>
-              </div>
-
-              {/* Per-file breakdown */}
-              {result.fileStats && (
-                <div style={{ marginBottom: 18, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {result.fileStats.map((stat, i) => (
-                    <div key={i} className="file-chip" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                        <FileSpreadsheet size={15} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
-                        <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {stat.filename}
-                        </span>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: '0.76rem', flexShrink: 0 }}>
-                        <span style={{ color: 'var(--text-muted)' }}>{stat.total} total</span>
-                        <span style={{ color: 'var(--accent)', fontWeight: 700 }}>{stat.filtered} trade</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Stats grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
-                <div className="stat-card">
-                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                    Records Scanned
-                  </span>
-                  <div style={{ fontSize: '2rem', fontWeight: 900, marginTop: 4, color: 'var(--text-primary)' }}>
-                    {Number(result.recordsProcessed).toLocaleString()}
-                  </div>
-                </div>
-                <div className="stat-card accent">
-                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--accent)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                    Trade Records
-                  </span>
-                  <div style={{ fontSize: '2rem', fontWeight: 900, marginTop: 4, color: 'var(--accent)' }}>
-                    {Number(result.recordsFiltered).toLocaleString()}
-                  </div>
-                </div>
-              </div>
-
-              {/* City Stats */}
-              {result.cityStats && Object.keys(result.cityStats).length > 0 && (
-                <div style={{ marginBottom: 24, padding: '16px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px' }}>
-                  <h4 style={{ margin: '0 0 12px', fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>Region Breakdown</h4>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {Object.entries(result.cityStats)
-                      .sort((a, b) => b[1] - a[1])
-                      .map(([city, count]) => (
-                      <div key={city} style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 20, padding: '4px 12px', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{city}</span>
-                        <span style={{ color: 'var(--accent)', fontWeight: 700, background: 'var(--accent-light)', padding: '2px 6px', borderRadius: 10 }}>{count}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Download */}
-              <a href={result.downloadUrl} download={result.filename} className="btn-download">
-                <Download size={18} style={{ marginRight: 10 }} />
-                Download {result.filename}
-              </a>
+            {/* Custom Designed Table */}
+            <div className="table-container">
+              <table className="custom-data-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: 130 }}>Ticket No</th>
+                    <th style={{ width: 120 }}>Case Id</th>
+                    <th style={{ width: 180 }}>Current Remarks</th>
+                    <th style={{ width: 100, textAlign: 'center' }}>WIP Aging</th>
+                    <th style={{ width: 160 }}>WIP Aging Category</th>
+                    <th style={{ width: 130 }}>Status</th>
+                    <th style={{ width: 120 }}>HP Owner</th>
+                    <th>Product Name</th>
+                    <th style={{ width: 140 }}>Product Serial No</th>
+                    <th style={{ width: 130 }}>Product Type</th>
+                    <th style={{ width: 120 }}>ASP City</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredData.map((row, idx) => {
+                    const status = String(row['Status'] || '-');
+                    const rowClass = getStatusClass(status);
+                    const wipStr = row['WIP Aging'] || '-';
+                    
+                    return (
+                      <tr key={idx} className={rowClass}>
+                        <td style={{ fontWeight: 700, fontFamily: 'monospace', fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+                          {row['Ticket No'] || '-'}
+                        </td>
+                        <td style={{ color: 'var(--text-secondary)' }}>
+                          {row['Case Id'] || '-'}
+                        </td>
+                        <td className="truncate-cell" title={row['Current Remarks'] || ''} style={{ color: 'var(--text-secondary)' }}>
+                          {row['Current Remarks'] || '-'}
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <span className={getWipBadgeClass(wipStr)}>{wipStr}</span>
+                        </td>
+                        <td style={{ color: 'var(--purple-text)', fontWeight: 600, fontSize: '0.85rem' }}>
+                          {row['WIP Aging Category'] || '-'}
+                        </td>
+                        <td className="status-cell">
+                           <span>{status}</span>
+                        </td>
+                        <td style={{ color: 'var(--text-secondary)' }}>
+                          {row['HP Owner'] || '-'}
+                        </td>
+                        <td style={{ color: 'var(--text-primary)' }} className="truncate-cell" title={row['Product Name'] || ''}>
+                          {row['Product Name'] || '-'}
+                        </td>
+                        <td style={{ color: 'var(--text-secondary)', fontFamily: 'monospace' }}>
+                           {row['Product Serial No'] || '-'}
+                        </td>
+                        <td style={{ color: 'var(--text-secondary)' }}>
+                           {row['Product Type'] || '-'}
+                        </td>
+                        <td style={{ color: 'var(--text-secondary)' }}>
+                          {row['ASP City'] || '-'}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {filteredData.length === 0 && (
+                     <tr>
+                        <td colSpan="11" style={{ textAlign: 'center', padding: '40px!', color: 'var(--text-muted)' }}>
+                           No results match your search.
+                        </td>
+                     </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
-          )}
-        </div>
-
-      </div>
-    </>
+          </>
+        )}
+      </main>
+    </div>
   );
 }
 
