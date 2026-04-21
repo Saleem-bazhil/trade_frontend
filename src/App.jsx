@@ -429,14 +429,14 @@ function App() {
                     }}>SN</th>
                     <RenderHeader label="Ticket No" column="Ticket No" width={130} />
                     <RenderHeader label="Case Id" column="Case Id" width={120} />
-                    <RenderHeader label="Current Remarks" column="Current Remarks" width={220} />
+                    <RenderHeader label="Product Name" column="Product Name" width={250} />
+                    <RenderHeader label="Product Type" column="Product Type" width={130} />
+                    <RenderHeader label="Product Serial No" width={140} />
                     <RenderHeader label="WIP Aging" column="WIP Aging" width={100} />
                     <RenderHeader label="WIP Aging Category" column="WIP Aging Category" width={160} />
-                    <RenderHeader label="Status" column="Status" width={130} />
                     <RenderHeader label="HP Owner" column="HP Owner" width={120} />
-                    <RenderHeader label="Product Name" column="Product Name" width={250} />
-                    <RenderHeader label="Product Serial No" width={140} />
-                    <RenderHeader label="Product Type" column="Product Type" width={130} />
+                    <RenderHeader label="Status" column="Status" width={130} />
+                    <RenderHeader label="Current Remarks" column="Current Remarks" width={220} />
                     <RenderHeader label="ASP City" column="ASP City" width={140} />
                   </tr>
                 </thead>
@@ -467,13 +467,14 @@ function App() {
                         <td style={{ color: 'var(--text-secondary)' }}>
                           {row['Case Id'] || '-'}
                         </td>
-                        <td className="truncate-cell" style={{ color: 'var(--text-secondary)', padding: '4px' }}>
-                          <textarea 
-                            className="remarks-textarea"
-                            value={row['Current Remarks'] || ''}
-                            onChange={(e) => handleRemarkChange(idx, e.target.value)}
-                            placeholder="Type remarks here..."
-                          />
+                        <td style={{ color: 'var(--text-primary)' }} className="truncate-cell" title={row['Product Name'] || ''}>
+                          {row['Product Name'] || '-'}
+                        </td>
+                        <td style={{ color: 'var(--text-secondary)' }}>
+                           {row['Product Type'] || '-'}
+                        </td>
+                        <td style={{ color: 'var(--text-secondary)', fontFamily: 'monospace' }}>
+                           {row['Product Serial No'] || '-'}
                         </td>
                         <td style={{ textAlign: 'center' }}>
                           <span className={getWipBadgeClass(wipStr)}>{wipStr}</span>
@@ -481,20 +482,19 @@ function App() {
                         <td style={{ color: 'var(--purple-text)', fontWeight: 600, fontSize: '0.85rem' }}>
                           {row['WIP Aging Category'] || '-'}
                         </td>
-                        <td className="status-cell">
-                           <span>{status}</span>
-                        </td>
                         <td style={{ color: 'var(--text-secondary)' }}>
                           {row['HP Owner'] || '-'}
                         </td>
-                        <td style={{ color: 'var(--text-primary)' }} className="truncate-cell" title={row['Product Name'] || ''}>
-                          {row['Product Name'] || '-'}
+                        <td className="status-cell">
+                           <span>{status}</span>
                         </td>
-                        <td style={{ color: 'var(--text-secondary)', fontFamily: 'monospace' }}>
-                           {row['Product Serial No'] || '-'}
-                        </td>
-                        <td style={{ color: 'var(--text-secondary)' }}>
-                           {row['Product Type'] || '-'}
+                        <td className="truncate-cell" style={{ color: 'var(--text-secondary)', padding: '4px' }}>
+                          <textarea 
+                            className="remarks-textarea"
+                            value={row['Current Remarks'] || ''}
+                            onChange={(e) => handleRemarkChange(idx, e.target.value)}
+                            placeholder="Type remarks here..."
+                          />
                         </td>
                         <td style={{ color: 'var(--text-secondary)' }}>
                           {row['ASP City'] || '-'}
