@@ -57,19 +57,6 @@ function App() {
     });
   };
 
-  const handleExportEdits = () => {
-    if (!filteredData || filteredData.length === 0) return;
-    
-    const ws = XLSX.utils.json_to_sheet(filteredData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Trade Report");
-    
-    // Generate filename
-    const dateStr = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
-    const filename = `Trade_Report_Edited_${dateStr}.xlsx`;
-    
-    XLSX.writeFile(wb, filename);
-  };
 
   const getUniqueValues = (column) => {
     if (!result?.gridData) return [];
@@ -349,13 +336,9 @@ function App() {
                      <span style={{ fontSize: '0.95rem', color: 'var(--brand-accent)', fontWeight: 800 }}>{Number(result.recordsFiltered).toLocaleString()}</span>
                  </div>
               </div>
-              <button onClick={handleExportEdits} className="btn-export" title="Export current view with your edits">
+              <a href={result.downloadUrl} download={result.filename} className="btn-export" title="Download Trade Report (includes Pivot Table)">
                 <Download size={15} style={{ marginRight: 8 }}/>
-                <span>Export Edited</span>
-              </button>
-              <a href={result.downloadUrl} download={result.filename} className="btn-export" style={{ opacity: 0.7 }} title="Download original file from server (includes Pivot Table)">
-                <Download size={15} style={{ marginRight: 8 }}/>
-                <span>Original</span>
+                <span>Export Trade Report</span>
               </a>
             </>
           )}
