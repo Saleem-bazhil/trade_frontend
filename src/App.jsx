@@ -296,7 +296,14 @@ function App() {
               <table className="custom-data-table">
                 <thead>
                   <tr>
-                    <th style={{ width: 60 }}>SN</th>
+                    <th style={{ 
+                      width: 60, 
+                      position: 'sticky', 
+                      left: 0, 
+                      zIndex: 3, 
+                      background: 'var(--surface-table)',
+                      borderRight: '1px solid var(--border-strong)'
+                    }}>SN</th>
                     <th style={{ width: 130 }}>Ticket No</th>
                     <th style={{ width: 120 }}>Case Id</th>
                     <th style={{ width: 180 }}>Current Remarks</th>
@@ -318,7 +325,17 @@ function App() {
                     
                     return (
                       <tr key={idx} className={rowClass}>
-                        <td style={{ textAlign: 'center', color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.8rem' }}>
+                        <td style={{ 
+                          textAlign: 'center', 
+                          color: 'var(--text-muted)', 
+                          fontWeight: 600, 
+                          fontSize: '0.8rem',
+                          position: 'sticky',
+                          left: 0,
+                          zIndex: 1,
+                          background: 'var(--surface-table)',
+                          borderRight: '1px solid var(--border-subtle)'
+                        }}>
                           {idx + 1}
                         </td>
                         <td style={{ fontWeight: 700, fontFamily: 'monospace', fontSize: '0.9rem', color: 'var(--text-primary)' }}>
