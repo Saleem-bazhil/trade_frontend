@@ -178,7 +178,7 @@ function App() {
     const isOpen = openFilter === column;
 
     return (
-      <th style={{ width, position: 'relative' }}>
+      <th style={{ width, position: 'relative', fontSize: '0.8rem' }}>
         <div className="header-content">
           <span>{label}</span>
           {column && (
@@ -356,17 +356,17 @@ function App() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
           {result && (
             <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginRight: 8 }}>
-                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                     <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>Total Flex Calls</span>
-                     <span style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 800 }}>{Number(result.recordsProcessed).toLocaleString()}</span>
-                 </div>
-                 <div style={{ height: 24, width: 1, background: 'var(--border-subtle)' }}></div>
-                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                     <span style={{ fontSize: '0.65rem', color: 'var(--brand-accent)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>Total Trade Calls</span>
-                     <span style={{ fontSize: '0.95rem', color: 'var(--brand-accent)', fontWeight: 800 }}>{Number(result.recordsFiltered).toLocaleString()}</span>
-                 </div>
-              </div>
+               <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginRight: 8 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                     <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.05em' }}>Total Flex Calls</span>
+                     <span style={{ fontSize: '1.05rem', color: 'var(--text-primary)', fontWeight: 900 }}>{Number(result.recordsProcessed).toLocaleString()}</span>
+                  </div>
+                  <div style={{ height: 32, width: 1, background: 'var(--border-subtle)' }}></div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                     <span style={{ fontSize: '0.75rem', color: 'var(--brand-accent)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.05em' }}>Total Trade Calls</span>
+                     <span style={{ fontSize: '1.05rem', color: 'var(--brand-accent)', fontWeight: 900 }}>{Number(result.recordsFiltered).toLocaleString()}</span>
+                  </div>
+               </div>
                
                {result.cityStats && Object.entries(result.cityStats).length > 0 && (
                  <div className="city-stats-container">
@@ -378,10 +378,11 @@ function App() {
                     ))}
                  </div>
                )}
-              <a href={result.downloadUrl} download={result.filename} className="btn-export" title="Download Trade Report (includes Pivot Table)">
-                <Download size={15} style={{ marginRight: 8 }}/>
-                <span>Export Trade Report</span>
-              </a>
+
+               <a href={result.downloadUrl} download={result.filename} className="btn-export" title="Download Trade Report (includes Pivot Table)">
+                 <Download size={15} style={{ marginRight: 8 }}/>
+                 <span>Export Trade Report</span>
+               </a>
             </>
           )}
           

@@ -10,9 +10,9 @@
   --border-subtle: rgba(255, 255, 255, 0.12);
   --border-strong: rgba(255, 255, 255, 0.25);
   
-  --text-primary: #e2e8f0;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
+  --text-primary: #ffffff;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
   
   --brand-accent: #3b82f6; /* Blue for branding */
   --brand-accent-hover: #2563eb;
@@ -207,8 +207,8 @@ button {
 }
 
 .custom-data-table td {
-  padding: 12px 16px;
-  font-size: 0.85rem;
+  padding: 14px 16px;
+  font-size: 0.9rem;
   white-space: nowrap;
   border-right: 1px solid var(--border-subtle);
 }
@@ -416,12 +416,12 @@ button {
   justify-content: flex-end;
 }
 .btn-filter-apply {
-  padding: 6px 14px;
+  padding: 8px 16px;
   background: var(--brand-accent);
   color: white;
   border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-size: 0.85rem;
+  font-weight: 700;
 }
 
 /* ─── Modal System ─── */
