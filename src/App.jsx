@@ -37,6 +37,37 @@ function App() {
     }
   };
 
+  const handleRemarkChange = (idx, value) => {
+    setResult(prev => {
+      if (!prev) return prev;
+      const newData = [...prev.gridData];
+      // Find the actual index in result.gridData from the filteredData index if needed
+      // Actually, since we are mapping over filteredData, we need the original index or update based on a unique ID.
+      // But filteredData is derived from result.gridData. 
+      // Let's pass the actual row object or find it.
+      const item = filteredData[idx];
+      const originalIdx = prev.gridData.findIndex(r => r === item);
+      if (originalIdx !== -1) {
+        newData[originalIdx] = { ...newData[originalIdx], 'Current Remarks': value };
+      }
+      return { ...prev, gridData: newData };
+    });
+  };
+
+  const handleExportEdits = () => {
+    if (!result?.gridData) return;
+    
+    const ws = XLSX.utils.json_to_sheet(result.gridData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Trade Report");
+    
+    // Generate filename
+    const dateStr = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
+    const filename = `Trade_Report_Edited_${dateStr}.xlsx`;
+    
+    XLSX.writeFile(wb, filename);
+  };
+
   const processFiles = async (selectedFiles) => {
     if (selectedFiles.length === 0) return;
     setProcessing(true);
@@ -195,9 +226,13 @@ function App() {
                      <span style={{ fontSize: '0.95rem', color: 'var(--brand-accent)', fontWeight: 800 }}>{Number(result.recordsFiltered).toLocaleString()}</span>
                  </div>
               </div>
-              <a href={result.downloadUrl} download={result.filename} className="btn-export">
+              <button onClick={handleExportEdits} className="btn-export" title="Export current view with your edits">
                 <Download size={15} style={{ marginRight: 8 }}/>
-                <span>Export Report</span>
+                <span>Export Edited</span>
+              </button>
+              <a href={result.downloadUrl} download={result.filename} className="btn-export" style={{ opacity: 0.7 }} title="Download original file from server (includes Pivot Table)">
+                <Download size={15} style={{ marginRight: 8 }}/>
+                <span>Original</span>
               </a>
             </>
           )}
@@ -288,8 +323,13 @@ function App() {
                         <td style={{ color: 'var(--text-secondary)' }}>
                           {row['Case Id'] || '-'}
                         </td>
-                        <td className="truncate-cell" title={row['Current Remarks'] || ''} style={{ color: 'var(--text-secondary)' }}>
-                          {row['Current Remarks'] || '-'}
+                        <td className="truncate-cell" style={{ color: 'var(--text-secondary)', padding: '4px' }}>
+                          <textarea 
+                            className="remarks-textarea"
+                            value={row['Current Remarks'] || ''}
+                            onChange={(e) => handleRemarkChange(idx, e.target.value)}
+                            placeholder="Type remarks here..."
+                          />
                         </td>
                         <td style={{ textAlign: 'center' }}>
                           <span className={getWipBadgeClass(wipStr)}>{wipStr}</span>

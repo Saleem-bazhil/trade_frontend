@@ -257,3 +257,34 @@ button {
 [data-theme="light"] .wip-badge.default {
   background: #f1f5f9; color: #475569;
 }
+
+/* ─── Editable Remarks ─── */
+.remarks-textarea {
+  width: 100%;
+  min-height: 40px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 4px 8px;
+  resize: vertical;
+  border-radius: 4px;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.remarks-textarea:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--border-subtle);
+}
+
+[data-theme="light"] .remarks-textarea:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.remarks-textarea:focus {
+  background: var(--bg-app);
+  border-color: var(--brand-accent);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
