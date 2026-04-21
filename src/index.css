@@ -573,3 +573,52 @@ button {
   font-size: 0.85rem;
 }
 .btn-primary:hover { background: var(--brand-accent-hover); }
+
+/* ─── Region Stats Pills ─── */
+.city-stats-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  border-left: 1px solid var(--border-subtle);
+  max-width: 400px;
+  overflow-x: auto;
+  scrollbar-width: none; /* Hide scrollbar for cleaner look */
+}
+.city-stats-container::-webkit-scrollbar { display: none; }
+
+.city-pill {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  padding: 2px 4px 2px 10px;
+  white-space: nowrap;
+  animation: fadeIn 0.3s ease-out;
+}
+
+[data-theme="light"] .city-pill {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.city-name {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-right: 8px;
+}
+
+.city-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--brand-accent);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 900;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+}

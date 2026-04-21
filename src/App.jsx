@@ -367,6 +367,17 @@ function App() {
                      <span style={{ fontSize: '0.95rem', color: 'var(--brand-accent)', fontWeight: 800 }}>{Number(result.recordsFiltered).toLocaleString()}</span>
                  </div>
               </div>
+               
+               {result.cityStats && Object.entries(result.cityStats).length > 0 && (
+                 <div className="city-stats-container">
+                    {Object.entries(result.cityStats).map(([city, count]) => (
+                      <div key={city} className="city-pill" title={`${city}: ${count} trades`}>
+                        <span className="city-name">{city}</span>
+                        <span className="city-count">{count}</span>
+                      </div>
+                    ))}
+                 </div>
+               )}
               <a href={result.downloadUrl} download={result.filename} className="btn-export" title="Download Trade Report (includes Pivot Table)">
                 <Download size={15} style={{ marginRight: 8 }}/>
                 <span>Export Trade Report</span>
