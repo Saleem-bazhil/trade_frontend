@@ -358,12 +358,12 @@ function App() {
             <>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginRight: 8 }}>
                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                     <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>Total Scanned</span>
+                     <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>Total Flex Calls</span>
                      <span style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 800 }}>{Number(result.recordsProcessed).toLocaleString()}</span>
                  </div>
                  <div style={{ height: 24, width: 1, background: 'var(--border-subtle)' }}></div>
                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                     <span style={{ fontSize: '0.65rem', color: 'var(--brand-accent)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>Trade Extracted</span>
+                     <span style={{ fontSize: '0.65rem', color: 'var(--brand-accent)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>Total Trade Calls</span>
                      <span style={{ fontSize: '0.95rem', color: 'var(--brand-accent)', fontWeight: 800 }}>{Number(result.recordsFiltered).toLocaleString()}</span>
                  </div>
               </div>
