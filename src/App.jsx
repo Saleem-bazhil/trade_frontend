@@ -23,6 +23,12 @@ function App() {
   const [columnFilters, setColumnFilters] = useState({}); // { 'Status': ['NEW', 'PENDING'] }
   const [openFilter, setOpenFilter] = useState(null); // 'Status'
   const [filterSearch, setFilterSearch] = useState('');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newWO, setNewWO] = useState({
+    'Ticket No': '', 'Case Id': '', 'Product Name': '', 'Product Type': '',
+    'Product Serial No': '', 'WIP Aging': '0', 'WIP Aging Category': '',
+    'HP Owner': '', 'Status': 'NEW', 'Current Remarks': '', 'ASP City': ''
+  });
 
   const fileInputRef = useRef(null);
 
@@ -264,6 +270,31 @@ function App() {
     }
   };
 
+  const handleAddWO = (e) => {
+    e.preventDefault();
+    if (!newWO['Ticket No'] || !newWO['Case Id']) {
+      alert("Ticket No and Case Id are required!");
+      return;
+    }
+
+    setResult(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        gridData: [newWO, ...prev.gridData],
+        recordsFiltered: String(Number(prev.recordsFiltered) + 1),
+        recordsProcessed: String(Number(prev.recordsProcessed) + 1)
+      };
+    });
+
+    setIsAddModalOpen(false);
+    setNewWO({
+      'Ticket No': '', 'Case Id': '', 'Product Name': '', 'Product Type': '',
+      'Product Serial No': '', 'WIP Aging': '0', 'WIP Aging Category': '',
+      'HP Owner': '', 'Status': 'NEW', 'Current Remarks': '', 'ASP City': ''
+    });
+  };
+
 
   const getStatusClass = (statusStr) => {
     const s = String(statusStr || '').toUpperCase();
@@ -388,7 +419,7 @@ function App() {
                 />
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <button className="btn-add">
+                <button className="btn-add" onClick={() => setIsAddModalOpen(true)}>
                   <Plus size={16} /> Add WO
                 </button>
                 <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '0.05em' }}>
@@ -498,6 +529,107 @@ function App() {
           </>
         )}
       </main>
+      {/* ─── ADD WO MODAL ─── */}
+      {isAddModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsAddModalOpen(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Add New Work Order</h2>
+              <button className="modal-close" onClick={() => setIsAddModalOpen(false)}>
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleAddWO}>
+              <div className="modal-body">
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label>Ticket No *</label>
+                    <input 
+                      required
+                      type="text" 
+                      value={newWO['Ticket No']} 
+                      onChange={e => setNewWO({...newWO, 'Ticket No': e.target.value})} 
+                      placeholder="e.g. 5012345678"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Case Id *</label>
+                    <input 
+                      required
+                      type="text" 
+                      value={newWO['Case Id']} 
+                      onChange={e => setNewWO({...newWO, 'Case Id': e.target.value})} 
+                      placeholder="e.g. 123456789"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Product Name</label>
+                    <input 
+                      type="text" 
+                      value={newWO['Product Name']} 
+                      onChange={e => setNewWO({...newWO, 'Product Name': e.target.value})} 
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Product Type</label>
+                    <input 
+                      type="text" 
+                      value={newWO['Product Type']} 
+                      onChange={e => setNewWO({...newWO, 'Product Type': e.target.value})} 
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Status</label>
+                    <select value={newWO['Status']} onChange={e => setNewWO({...newWO, 'Status': e.target.value})}>
+                      <option value="NEW">NEW</option>
+                      <option value="WIP">WIP</option>
+                      <option value="PENDING">PENDING</option>
+                      <option value="TRANSIT">TRANSIT</option>
+                      <option value="CLOSED">CLOSED</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>ASP City</label>
+                    <input 
+                      type="text" 
+                      value={newWO['ASP City']} 
+                      onChange={e => setNewWO({...newWO, 'ASP City': e.target.value})} 
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>WIP Aging (Days)</label>
+                    <input 
+                      type="number" 
+                      value={newWO['WIP Aging']} 
+                      onChange={e => setNewWO({...newWO, 'WIP Aging': e.target.value})} 
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>HP Owner</label>
+                    <input 
+                      type="text" 
+                      value={newWO['HP Owner']} 
+                      onChange={e => setNewWO({...newWO, 'HP Owner': e.target.value})} 
+                    />
+                  </div>
+                </div>
+                <div className="form-group full">
+                  <label>Current Remarks</label>
+                  <textarea 
+                    value={newWO['Current Remarks']} 
+                    onChange={e => setNewWO({...newWO, 'Current Remarks': e.target.value})} 
+                    placeholder="Enter latest updates..."
+                  />
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn-secondary" onClick={() => setIsAddModalOpen(false)}>Cancel</button>
+                <button type="submit" className="btn-primary">Add Work Order</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
