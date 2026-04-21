@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   UploadCloud, FileSpreadsheet, Download,
-  Sun, Moon, Search, Plus
+  Sun, Moon, Search, Plus, Filter, ChevronDown, X
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
@@ -20,6 +20,9 @@ function App() {
   const [result, setResult] = useState(null);
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
   const [search, setSearch] = useState('');
+  const [columnFilters, setColumnFilters] = useState({}); // { 'Status': ['NEW', 'PENDING'] }
+  const [openFilter, setOpenFilter] = useState(null); // 'Status'
+  const [filterSearch, setFilterSearch] = useState('');
 
   const fileInputRef = useRef(null);
 
@@ -55,9 +58,9 @@ function App() {
   };
 
   const handleExportEdits = () => {
-    if (!result?.gridData) return;
+    if (!filteredData || filteredData.length === 0) return;
     
-    const ws = XLSX.utils.json_to_sheet(result.gridData);
+    const ws = XLSX.utils.json_to_sheet(filteredData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Trade Report");
     
@@ -66,6 +69,140 @@ function App() {
     const filename = `Trade_Report_Edited_${dateStr}.xlsx`;
     
     XLSX.writeFile(wb, filename);
+  };
+
+  const getUniqueValues = (column) => {
+    if (!result?.gridData) return [];
+    const values = [...new Set(result.gridData.map(row => String(row[column] || '')))];
+    return values.sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+  };
+
+  const toggleColumnFilter = (column, value) => {
+    setColumnFilters(prev => {
+      const current = prev[column] || [];
+      const next = current.includes(value) 
+        ? current.filter(v => v !== value) 
+        : [...current, value];
+      
+      const newFilters = { ...prev };
+      if (next.length === 0) delete newFilters[column];
+      else newFilters[column] = next;
+      return newFilters;
+    });
+  };
+
+  const clearColumnFilter = (column) => {
+    setColumnFilters(prev => {
+      const newFilters = { ...prev };
+      delete newFilters[column];
+      return newFilters;
+    });
+  };
+
+  const applyAllToColumn = (column, values) => {
+    setColumnFilters(prev => ({ ...prev, [column]: values }));
+  };
+
+  const filteredData = useMemo(() => {
+    if (!result?.gridData) return [];
+    
+    return result.gridData.filter(row => {
+      // 1. Global Search
+      const q = search.toLowerCase().trim();
+      const matchesSearch = !q || Object.values(row).some(val => 
+        String(val || '').toLowerCase().includes(q)
+      );
+      
+      if (!matchesSearch) return false;
+
+      // 2. Column Filters
+      const matchesColumnFilters = Object.entries(columnFilters).every(([col, selectedValues]) => {
+        if (!selectedValues || selectedValues.length === 0) return true;
+        return selectedValues.includes(String(row[col] || ''));
+      });
+
+      return matchesColumnFilters;
+    });
+  }, [result?.gridData, search, columnFilters]);
+
+  // Click outside to close filter popover
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (openFilter && !e.target.closest('.filter-popover') && !e.target.closest('.filter-trigger')) {
+        setOpenFilter(null);
+        setFilterSearch('');
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [openFilter]);
+
+  const FilterPopover = ({ column }) => {
+    const uniqueValues = getUniqueValues(column);
+    const selected = columnFilters[column] || [];
+    const filteredUniqueValues = uniqueValues.filter(v => 
+      v.toLowerCase().includes(filterSearch.toLowerCase())
+    );
+
+    return (
+      <div className="filter-popover">
+        <div className="filter-popover-header">
+          <input 
+            type="text" 
+            className="filter-search" 
+            placeholder={`Search ${column}...`}
+            value={filterSearch}
+            onChange={e => setFilterSearch(e.target.value)}
+            autoFocus
+          />
+          <div className="filter-actions">
+            <button onClick={() => applyAllToColumn(column, uniqueValues)}>Select All</button>
+            <button onClick={() => clearColumnFilter(column)}>Clear</button>
+          </div>
+        </div>
+        <div className="filter-list">
+          {filteredUniqueValues.map(val => (
+            <label key={val} className="filter-item">
+              <input 
+                type="checkbox" 
+                checked={selected.includes(val)}
+                onChange={() => toggleColumnFilter(column, val)}
+              />
+              <span className="truncate" title={val}>{val || '(Blanks)'}</span>
+            </label>
+          ))}
+          {filteredUniqueValues.length === 0 && <div style={{ padding: 12, fontSize: '0.8rem', color: 'var(--text-muted)' }}>No matches</div>}
+        </div>
+        <div className="filter-footer">
+          <button className="btn-filter-apply" onClick={() => setOpenFilter(null)}>Done</button>
+        </div>
+      </div>
+    );
+  };
+
+  const RenderHeader = ({ label, column, width }) => {
+    const isFiltered = columnFilters[column] && columnFilters[column].length > 0;
+    const isOpen = openFilter === column;
+
+    return (
+      <th style={{ width, position: 'relative' }}>
+        <div className="header-content">
+          <span>{label}</span>
+          {column && (
+            <div 
+              className={`filter-trigger ${isFiltered ? 'active' : ''}`}
+              onClick={() => {
+                setOpenFilter(isOpen ? null : column);
+                setFilterSearch('');
+              }}
+            >
+              <Filter size={12} fill={isFiltered ? 'currentColor' : 'none'} />
+            </div>
+          )}
+        </div>
+        {isOpen && <FilterPopover column={column} />}
+      </th>
+    );
   };
 
   const processFiles = async (selectedFiles) => {
@@ -140,20 +277,6 @@ function App() {
     }
   };
 
-  // Filter logic
-  const filteredData = useMemo(() => {
-    if (!result?.gridData) return [];
-    if (!search.trim()) return result.gridData;
-    const q = search.toLowerCase();
-    return result.gridData.filter(row => {
-      const tNo = String(row['Ticket No'] || '').toLowerCase();
-      const cId = String(row['Case Id'] || '').toLowerCase();
-      const st = String(row['Status'] || '').toLowerCase();
-      const loc = String(row['ASP City'] || '').toLowerCase();
-      const prod = String(row['Product Name'] || '').toLowerCase();
-      return tNo.includes(q) || cId.includes(q) || st.includes(q) || loc.includes(q) || prod.includes(q);
-    });
-  }, [result?.gridData, search]);
 
   const getStatusClass = (statusStr) => {
     const s = String(statusStr || '').toUpperCase();
@@ -304,17 +427,17 @@ function App() {
                       background: 'var(--surface-table)',
                       borderRight: '1px solid var(--border-strong)'
                     }}>SN</th>
-                    <th style={{ width: 130 }}>Ticket No</th>
-                    <th style={{ width: 120 }}>Case Id</th>
-                    <th style={{ width: 180 }}>Current Remarks</th>
-                    <th style={{ width: 100, textAlign: 'center' }}>WIP Aging</th>
-                    <th style={{ width: 160 }}>WIP Aging Category</th>
-                    <th style={{ width: 130 }}>Status</th>
-                    <th style={{ width: 120 }}>HP Owner</th>
-                    <th>Product Name</th>
-                    <th style={{ width: 140 }}>Product Serial No</th>
-                    <th style={{ width: 130 }}>Product Type</th>
-                    <th style={{ width: 120 }}>ASP City</th>
+                    <RenderHeader label="Ticket No" column="Ticket No" width={130} />
+                    <RenderHeader label="Case Id" column="Case Id" width={120} />
+                    <RenderHeader label="Current Remarks" column="Current Remarks" width={220} />
+                    <RenderHeader label="WIP Aging" column="WIP Aging" width={100} />
+                    <RenderHeader label="WIP Aging Category" column="WIP Aging Category" width={160} />
+                    <RenderHeader label="Status" column="Status" width={130} />
+                    <RenderHeader label="HP Owner" column="HP Owner" width={120} />
+                    <RenderHeader label="Product Name" column="Product Name" width={250} />
+                    <RenderHeader label="Product Serial No" width={140} />
+                    <RenderHeader label="Product Type" column="Product Type" width={130} />
+                    <RenderHeader label="ASP City" column="ASP City" width={140} />
                   </tr>
                 </thead>
                 <tbody>
