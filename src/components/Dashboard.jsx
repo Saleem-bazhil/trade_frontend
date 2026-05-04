@@ -11,8 +11,8 @@ const getApiBase = () => {
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
       return '/api';
     }
-    if (window.location.hostname.includes('systimus.in') || window.location.hostname.includes('vercel.app')) {
-      return 'https://trade.systimus.in/api';
+    if (window.location.hostname.includes('bazhilgroups.in') || window.location.hostname.includes('vercel.app')) {
+      return 'https://demo.bazhilgroups.in/api';
     }
   }
   return '/api';
