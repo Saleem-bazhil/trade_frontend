@@ -48,10 +48,14 @@ function Dashboard() {
       const response = await fetch(`${API_BASE}/history`);
       if (response.ok) {
         const data = await response.json();
-        setHistory(data);
+        setHistory(Array.isArray(data) ? data : []);
+      } else {
+        console.error('History API returned:', response.status, response.statusText);
+        setHistory([]);
       }
     } catch (err) {
       console.error('Failed to load file history:', err);
+      setHistory([]);
     } finally {
       setLoadingHistory(false);
     }
