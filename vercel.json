@@ -5,7 +5,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://demo.bazhilgroups.in/api/$1"
+      "destination": "https://trade.systimus.in/api/$1"
     }
   ]
 }

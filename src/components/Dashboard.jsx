@@ -6,7 +6,19 @@ import {
 import * as XLSX from 'xlsx';
 import { useNavigate } from 'react-router-dom';
 
-const API_BASE = '/api';
+const getApiBase = () => {
+  if (typeof window !== 'undefined' && window.location) {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return '/api';
+    }
+    if (window.location.hostname.includes('systimus.in') || window.location.hostname.includes('vercel.app')) {
+      return 'https://trade.systimus.in/api';
+    }
+  }
+  return '/api';
+};
+
+const API_BASE = getApiBase();
 
 const Spinner = () => (
   <svg className="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
