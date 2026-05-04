@@ -19,7 +19,14 @@ function Dashboard() {
   const navigate = useNavigate();
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState(null);
-  const [result, setResult] = useState(null);
+  const [result, setResult] = useState(() => {
+    try {
+      const savedResult = localStorage.getItem('tradeResult');
+      return savedResult ? JSON.parse(savedResult) : null;
+    } catch (e) {
+      return null;
+    }
+  });
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
   const [search, setSearch] = useState('');
   const [columnFilters, setColumnFilters] = useState({}); // { 'Status': ['NEW', 'PENDING'] }
@@ -38,6 +45,14 @@ function Dashboard() {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
   }, [theme]);
+
+  useEffect(() => {
+    if (result) {
+      localStorage.setItem('tradeResult', JSON.stringify(result));
+    } else {
+      localStorage.removeItem('tradeResult');
+    }
+  }, [result]);
 
   const toggleTheme = () => setTheme(t => t === 'light' ? 'dark' : 'light');
 
@@ -273,6 +288,14 @@ function Dashboard() {
     }
   };
 
+  const handleExport = () => {
+    if (!result?.gridData) return;
+    const ws = XLSX.utils.json_to_sheet(result.gridData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Trade Report");
+    XLSX.writeFile(wb, result.filename || `Trade_Report_${new Date().toLocaleDateString('en-GB').replace(/\//g, '-')}.xlsx`);
+  };
+
   const handleAddWO = (e) => {
     e.preventDefault();
     if (!newWO['Ticket No'] || !newWO['Case Id']) {
@@ -382,10 +405,10 @@ function Dashboard() {
                  </div>
                )}
 
-               <a href={result.downloadUrl} download={result.filename} className="btn-export" title="Download Trade Report (includes Pivot Table)">
+               <button onClick={handleExport} className="btn-export" title="Download Trade Report (Direct Download)">
                  <Download size={15} style={{ marginRight: 8 }}/>
                  <span>Export Trade Report</span>
-               </a>
+               </button>
             </>
           )}
           
