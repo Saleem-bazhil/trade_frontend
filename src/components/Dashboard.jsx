@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   UploadCloud, FileSpreadsheet, Download,
-  Sun, Moon, Search, Plus, Filter, ChevronDown, X, LogOut
+  Sun, Moon, Search, Plus, Filter, ChevronDown, X, LogOut, Clock
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { useNavigate } from 'react-router-dom';
@@ -33,11 +33,29 @@ function Dashboard() {
   const [openFilter, setOpenFilter] = useState(null); // 'Status'
   const [filterSearch, setFilterSearch] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [history, setHistory] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
   const [newWO, setNewWO] = useState({
     'Ticket No': '', 'Case Id': '', 'Product Name': '', 'Product Type': '',
     'Product Serial No': '', 'WIP Aging': '0', 'WIP Aging Category': '',
     'HP Owner': '', 'Status': 'NEW', 'Current Remarks': '', 'ASP City': ''
   });
+
+  const fetchHistory = async () => {
+    setLoadingHistory(true);
+    try {
+      const response = await fetch(`${API_BASE}/history`);
+      if (response.ok) {
+        const data = await response.json();
+        setHistory(data);
+      }
+    } catch (err) {
+      console.error('Failed to load file history:', err);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
 
   const fileInputRef = useRef(null);
 
@@ -412,6 +430,10 @@ function Dashboard() {
             </>
           )}
           
+          <button className="theme-toggle-icon" onClick={() => { setIsHistoryModalOpen(true); fetchHistory(); }} title="File Import & Export History">
+            <Clock size={18} />
+          </button>
+
           <button className="theme-toggle-icon" onClick={toggleTheme} title="Toggle Theme">
             {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
           </button>
@@ -669,6 +691,72 @@ function Dashboard() {
                 <button type="submit" className="btn-primary">Add Work Order</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ─── FILE HISTORY MODAL ─── */}
+      {isHistoryModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsHistoryModalOpen(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '800px' }}>
+            <div className="modal-header">
+              <h2>File History</h2>
+              <button className="modal-close" onClick={() => setIsHistoryModalOpen(false)}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className="modal-body" style={{ maxHeight: '450px', overflowY: 'auto' }}>
+              {loadingHistory ? (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px' }}>
+                  <Spinner />
+                  <span style={{ marginLeft: 12, fontWeight: 600, color: 'var(--text-primary)' }}>Loading history...</span>
+                </div>
+              ) : history.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                  No file history recorded yet.
+                </div>
+              ) : (
+                <div className="table-container">
+                  <table className="custom-data-table">
+                    <thead>
+                      <tr>
+                        <th>Date & Time</th>
+                        <th>Filename</th>
+                        <th>Action</th>
+                        <th>Processed</th>
+                        <th>Filtered</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {history.map((h) => (
+                        <tr key={h.id}>
+                          <td style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                            {h.created_at ? new Date(h.created_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) : '-'}
+                          </td>
+                          <td style={{ fontWeight: 600, color: 'var(--text-primary)' }} className="truncate-cell" title={h.filename}>
+                            {h.filename || '-'}
+                          </td>
+                          <td>
+                            <span className={`wip-badge ${h.action === 'Export' ? 'warning' : 'default'}`} style={{ textTransform: 'uppercase', fontSize: '0.7rem' }}>
+                              {h.action || 'Unknown'}
+                            </span>
+                          </td>
+                          <td style={{ textAlign: 'center', fontWeight: 700 }}>
+                            {h.total_records || 0}
+                          </td>
+                          <td style={{ textAlign: 'center', color: 'var(--brand-accent)', fontWeight: 700 }}>
+                            {h.filtered_records || 0}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn-secondary" onClick={() => setIsHistoryModalOpen(false)}>Close</button>
+            </div>
           </div>
         </div>
       )}
