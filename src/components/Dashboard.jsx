@@ -61,6 +61,18 @@ function Dashboard() {
     }
   };
 
+  const clearHistory = async () => {
+    if (!confirm('Are you sure you want to clear all history?')) return;
+    try {
+      const response = await fetch(`${API_BASE}/history`, { method: 'DELETE' });
+      if (response.ok) {
+        setHistory([]);
+      }
+    } catch (err) {
+      console.error('Failed to clear history:', err);
+    }
+  };
+
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -759,6 +771,9 @@ function Dashboard() {
               )}
             </div>
             <div className="modal-footer">
+              {history.length > 0 && (
+                <button type="button" className="btn-secondary" onClick={clearHistory} style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.3)' }}>Clear All History</button>
+              )}
               <button type="button" className="btn-secondary" onClick={() => setIsHistoryModalOpen(false)}>Close</button>
             </div>
           </div>
