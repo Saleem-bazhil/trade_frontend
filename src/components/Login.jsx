@@ -17,7 +17,7 @@ function Login() {
 
     // Mock authentication
     setTimeout(() => {
-      if (username === 'admin' && password === 'admin123') {
+      if (username === 'trade' && password === '123456') {
         localStorage.setItem('isAuthenticated', 'true');
         navigate('/');
       } else {
