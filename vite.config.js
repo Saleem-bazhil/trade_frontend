@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:8001',
+        target: 'https://trade.systimus.in/',
         changeOrigin: true,
       },
     },

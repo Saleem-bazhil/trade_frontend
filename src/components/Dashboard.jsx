@@ -6,7 +6,7 @@ import {
 import * as XLSX from 'xlsx';
 import { useNavigate } from 'react-router-dom';
 
-const API_BASE = '/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'https://trade.systimus.in/api';
 
 const Spinner = () => (
   <svg className="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
