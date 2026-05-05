@@ -12,7 +12,7 @@ const getApiBase = () => {
       return '/api';
     }
     if (window.location.hostname.includes('bazhilgroups.in') || window.location.hostname.includes('vercel.app')) {
-      return 'https://demo.bazhilgroups.in/api';
+      return 'https://trade-backend-qk0h.onrender.com/api';
     }
   }
   return '/api';

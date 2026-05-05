@@ -5,7 +5,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://demo.bazhilgroups.in/api/$1"
+      "destination": "https://trade-backend-qk0h.onrender.com/api/$1"
     }
   ]
 }
