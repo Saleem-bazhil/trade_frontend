@@ -163,7 +163,7 @@ function Dashboard() {
   const filteredData = useMemo(() => {
     if (!result?.gridData) return [];
     
-    return result.gridData.filter(row => {
+    const filtered = result.gridData.filter(row => {
       // 1. Global Search
       const q = search.toLowerCase().trim();
       const matchesSearch = !q || Object.values(row).some(val => 
@@ -179,6 +179,13 @@ function Dashboard() {
       });
 
       return matchesColumnFilters;
+    });
+
+    // Sort WIP Aging from highest to lowest
+    return filtered.sort((a, b) => {
+      const valA = parseInt(a['WIP Aging'], 10) || 0;
+      const valB = parseInt(b['WIP Aging'], 10) || 0;
+      return valB - valA;
     });
   }, [result?.gridData, search, columnFilters]);
 
