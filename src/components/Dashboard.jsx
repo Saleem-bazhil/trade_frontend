@@ -485,16 +485,7 @@ function Dashboard() {
                   </div>
                </div>
                
-               {result.cityStats && Object.entries(result.cityStats).length > 0 && (
-                 <div className="city-stats-container">
-                    {Object.entries(result.cityStats).map(([city, count]) => (
-                      <div key={city} className="city-pill" title={`${city}: ${count} trades`}>
-                        <span className="city-name">{city}</span>
-                        <span className="city-count">{count}</span>
-                      </div>
-                    ))}
-                 </div>
-               )}
+
 
                <button onClick={handleExport} className="btn-export" title="Download Trade Report (Direct Download)">
                  <Download size={15} style={{ marginRight: 8 }}/>
@@ -546,14 +537,26 @@ function Dashboard() {
           <>
             {/* Table Header Area */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <div className="search-bar">
-                <Search size={16} strokeWidth={2.5} className="search-icon" />
-                <input 
-                  type="text" 
-                  placeholder="Search by Ticket, Case Id, Status, Area..." 
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <div className="search-bar">
+                  <Search size={16} strokeWidth={2.5} className="search-icon" />
+                  <input 
+                    type="text" 
+                    placeholder="Search by Ticket, Case Id, Status, Area..." 
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                  />
+                </div>
+                {result.cityStats && Object.entries(result.cityStats).length > 0 && (
+                  <div className="city-stats-container">
+                     {Object.entries(result.cityStats).map(([city, count]) => (
+                       <div key={city} className="city-pill" title={`${city}: ${count} trades`}>
+                         <span className="city-name">{city}</span>
+                         <span className="city-count">{count}</span>
+                       </div>
+                     ))}
+                  </div>
+                )}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                 <button className="btn-add" onClick={() => setIsAddModalOpen(true)}>
