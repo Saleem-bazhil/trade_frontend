@@ -549,12 +549,21 @@ function Dashboard() {
                 </div>
                 {result.cityStats && Object.entries(result.cityStats).length > 0 && (
                   <div className="city-stats-container">
-                     {Object.entries(result.cityStats).map(([city, count]) => (
-                       <div key={city} className="city-pill" title={`${city}: ${count} trades`}>
-                         <span className="city-name">{city}</span>
-                         <span className="city-count">{count}</span>
-                       </div>
-                     ))}
+                     {Object.entries(result.cityStats).map(([city, count]) => {
+                       const isActive = columnFilters['ASP City']?.includes(city);
+                       return (
+                         <div 
+                           key={city} 
+                           className={`city-pill ${isActive ? 'active' : ''}`} 
+                           title={`${city}: ${count} trades`}
+                           onClick={() => toggleColumnFilter('ASP City', city)}
+                           style={{ cursor: 'pointer' }}
+                         >
+                           <span className="city-name">{city}</span>
+                           <span className="city-count">{count}</span>
+                         </div>
+                       );
+                     })}
                   </div>
                 )}
               </div>

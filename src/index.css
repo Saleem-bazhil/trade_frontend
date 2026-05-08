@@ -624,6 +624,20 @@ button {
   border-radius: 12px;
 }
 
+.city-pill.active {
+  background: var(--brand-accent) !important;
+  border-color: var(--brand-accent) !important;
+}
+
+.city-pill.active .city-name {
+  color: #ffffff !important;
+}
+
+.city-pill.active .city-count {
+  background: #ffffff !important;
+  color: var(--brand-accent) !important;
+}
+
 /* ─── Login Page Styles ─── */
 .login-page {
   position: relative;
