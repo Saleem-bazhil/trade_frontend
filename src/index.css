@@ -578,10 +578,10 @@ button {
 .city-stats-container {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   padding: 0 16px;
-  border-left: 1px solid var(--border-subtle);
-  max-width: 400px;
+  border-left: 2px solid var(--border-subtle);
+  max-width: none; /* Removed limitation to prevent hiding */
   overflow-x: auto;
   scrollbar-width: none; /* Hide scrollbar for cleaner look */
 }
@@ -590,23 +590,24 @@ button {
 .city-pill {
   display: flex;
   align-items: center;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--border-subtle);
-  border-radius: 20px;
-  padding: 2px 4px 2px 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-strong);
+  border-radius: 24px;
+  padding: 4px 6px 4px 14px;
   white-space: nowrap;
   animation: fadeIn 0.3s ease-out;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 [data-theme="light"] .city-pill {
-  background: rgba(0, 0, 0, 0.03);
+  background: rgba(0, 0, 0, 0.04);
 }
 
 .city-name {
-  font-size: 0.7rem;
+  font-size: 0.85rem;
   font-weight: 700;
-  color: var(--text-secondary);
-  margin-right: 8px;
+  color: var(--text-primary);
+  margin-right: 10px;
 }
 
 .city-count {
@@ -615,12 +616,12 @@ button {
   justify-content: center;
   background: var(--brand-accent);
   color: white;
-  font-size: 0.7rem;
-  font-weight: 900;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
-  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 12px;
 }
 
 /* ─── Login Page Styles ─── */
