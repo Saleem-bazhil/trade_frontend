@@ -287,7 +287,7 @@ function Dashboard() {
     const isOpen = openFilter === column;
 
     return (
-      <th style={{ width, position: 'relative', fontSize: '0.8rem' }}>
+      <th style={{ width, position: 'sticky', top: 0, zIndex: 2, fontSize: '0.8rem' }}>
         <div className="header-content">
           <span>{label}</span>
           {column && (
