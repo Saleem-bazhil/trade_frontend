@@ -92,12 +92,50 @@ function Dashboard() {
     localStorage.setItem('theme', theme);
   }, [theme]);
 
+  // Load latest result from backend on mount
   useEffect(() => {
-    if (result) {
-      localStorage.setItem('tradeResult', JSON.stringify(result));
-    } else {
-      localStorage.removeItem('tradeResult');
-    }
+    const loadLatest = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/latest-result`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data) {
+            setResult({
+              ...data,
+              downloadUrl: null // Blob URL is local-only, but export doesn't need it
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load latest result from backend:', err);
+      }
+    };
+    loadLatest();
+  }, []);
+
+  // Save result to backend and localStorage with debounce
+  useEffect(() => {
+    if (!result) return;
+    
+    // Save to localStorage immediately for fast fallback
+    localStorage.setItem('tradeResult', JSON.stringify(result));
+
+    const handler = setTimeout(async () => {
+      try {
+        const dataToSave = { ...result };
+        delete dataToSave.downloadUrl; // Clean up non-serializable blob URL
+
+        await fetch(`${API_BASE}/save-result`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(dataToSave)
+        });
+      } catch (err) {
+        console.error('Failed to save latest result to backend:', err);
+      }
+    }, 1000); // 1-second debounce to handle typing remarks without spamming the backend
+
+    return () => clearTimeout(handler);
   }, [result]);
 
   const toggleTheme = () => setTheme(t => t === 'light' ? 'dark' : 'light');
