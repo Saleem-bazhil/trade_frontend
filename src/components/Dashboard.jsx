@@ -339,6 +339,7 @@ function Dashboard() {
 
       const recordsProcessed = response.headers.get('X-Records-Processed');
       const recordsFiltered = response.headers.get('X-Records-Filtered');
+      const duplicatesRemoved = response.headers.get('X-Duplicates-Removed');
       const fileStatsRaw = response.headers.get('X-File-Stats');
       const cityStatsRaw = response.headers.get('X-City-Stats');
       const contentDisposition = response.headers.get('Content-Disposition');
@@ -368,6 +369,7 @@ function Dashboard() {
         filename,
         recordsProcessed: recordsProcessed || '0',
         recordsFiltered: recordsFiltered || '0',
+        duplicatesRemoved: duplicatesRemoved || '0',
         fileStats,
         cityStats,
         gridData
@@ -477,6 +479,11 @@ function Dashboard() {
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.05em' }}>Total Flex Calls</span>
                      <span style={{ fontSize: '1.05rem', color: 'var(--text-primary)', fontWeight: 900 }}>{Number(result.recordsProcessed).toLocaleString()}</span>
+                  </div>
+                  <div style={{ height: 32, width: 1, background: 'var(--border-subtle)' }}></div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                     <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.05em' }}>Duplicates Removed</span>
+                     <span style={{ fontSize: '1.05rem', color: 'var(--text-primary)', fontWeight: 900 }}>{Number(result.duplicatesRemoved || 0).toLocaleString()}</span>
                   </div>
                   <div style={{ height: 32, width: 1, background: 'var(--border-subtle)' }}></div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
